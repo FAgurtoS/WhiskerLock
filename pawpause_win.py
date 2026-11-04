@@ -17,7 +17,7 @@ import tkinter as tk
 from ctypes import wintypes
 
 import pystray
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 from detector import CatDetector, WIN_LAYOUT  # noqa: E402
@@ -125,7 +125,32 @@ def hook_thread():
 # ---------------------------------------------------------------- tray icon
 
 
-def make_image(kind):
+EMOJI_FONT = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "seguiemj.ttf")
+CAT_EMOJI = "\U0001F431"                 # cat face
+BADGES = {"blocked": (225, 60, 60, 255), "warn": (240, 170, 40, 255)}
+_emoji_cache = []
+
+
+def _cat_emoji():
+    """The cat emoji as a 64x64 RGBA image, or None if the font is unavailable."""
+    if not _emoji_cache:
+        try:
+            font = ImageFont.truetype(EMOJI_FONT, 109)
+            big = Image.new("RGBA", (160, 160), (0, 0, 0, 0))
+            ImageDraw.Draw(big).text((0, 0), CAT_EMOJI, font=font, embedded_color=True)
+            box = big.getbbox()
+            glyph = big.crop(box)
+            glyph.thumbnail((60, 60), Image.LANCZOS)
+            img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+            img.paste(glyph, ((64 - glyph.width) // 2, (64 - glyph.height) // 2), glyph)
+            _emoji_cache.append(img)
+        except (OSError, ValueError, TypeError):
+            _emoji_cache.append(None)
+    return _emoji_cache[0]
+
+
+def _paw_image(kind):
+    """Fallback icon: drawn paw on a coloured tile."""
     colors = {"ok": (250, 200, 115), "blocked": (225, 80, 80),
               "off": (160, 160, 160), "warn": (240, 170, 40)}
     img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
@@ -135,6 +160,20 @@ def make_image(kind):
     d.ellipse((20, 30, 44, 54), fill=ink)                     # pad
     for x, y in ((11, 24), (23, 12), (37, 12), (49, 24)):     # toes
         d.ellipse((x - 6, y - 6, x + 6, y + 6), fill=ink)
+    return img
+
+
+def make_image(kind):
+    cat = _cat_emoji()
+    if cat is None:
+        return _paw_image(kind)
+    img = cat.copy()
+    if kind == "off":                                          # grey cat = not armed
+        alpha = img.getchannel("A")
+        img = Image.merge("RGBA", (*(img.convert("L"),) * 3, alpha))
+    elif kind in BADGES:                                       # dot: blocked / warning
+        d = ImageDraw.Draw(img)
+        d.ellipse((38, 38, 62, 62), fill=BADGES[kind], outline=(255, 255, 255, 255), width=3)
     return img
 
 
