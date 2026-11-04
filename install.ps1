@@ -21,6 +21,10 @@ Write-Host "==> Creating Python environment"
 & "$prefix\venv\Scripts\python.exe" -m pip install --quiet --upgrade pip
 & "$prefix\venv\Scripts\python.exe" -m pip install --quiet pystray pillow
 
+Write-Host "==> Creating icon"
+$ico = "$prefix\pawpause.ico"
+& "$prefix\venv\Scripts\python.exe" "$here\make_icon_win.py" $ico
+
 Write-Host "==> Creating Start Menu shortcut"
 $lnk = Join-Path ([Environment]::GetFolderPath("Programs")) "Paw Pause.lnk"
 $sh  = New-Object -ComObject WScript.Shell
@@ -29,6 +33,7 @@ $s.TargetPath       = "$prefix\venv\Scripts\pythonw.exe"
 $s.Arguments        = "`"$prefix\pawpause_win.py`""
 $s.WorkingDirectory = $prefix
 $s.Description      = "Pauses the keyboard when a cat walks on it"
+if (Test-Path $ico) { $s.IconLocation = "$ico,0" }
 $s.Save()
 
 Write-Host ""

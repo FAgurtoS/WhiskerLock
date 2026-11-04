@@ -202,12 +202,28 @@ def quit_app(icon, item):
     events.put("quit")
 
 
+WM_LBUTTONUP, WM_RBUTTONUP = 0x0202, 0x0205
+
+
+class TrayIcon(pystray.Icon):
+    """Tray icon whose menu opens on left click as well as right click.
+
+    pystray only shows the menu on right click; custom shells (e.g. MyDockFinder)
+    and most people expect the primary button to work too.
+    """
+
+    def _on_notify(self, wparam, lparam):
+        if lparam == WM_LBUTTONUP:
+            lparam = WM_RBUTTONUP
+        super()._on_notify(wparam, lparam)
+
+
 def build_tray():
     def sens(name):
         return pystray.MenuItem(name.capitalize(), set_sensitivity(name),
                                 checked=lambda i, n=name: settings["sensitivity"] == n,
                                 radio=True)
-    return pystray.Icon("pawpause", make_image("ok"), "Paw Pause", pystray.Menu(
+    return TrayIcon("pawpause", make_image("ok"), "Paw Pause", pystray.Menu(
         pystray.MenuItem(status_text, None, enabled=False),
         pystray.MenuItem("Armed", toggle_armed, checked=lambda i: state["armed"]),
         pystray.MenuItem("Stay locked until I unlock", toggle_stay,
@@ -309,7 +325,17 @@ def beep():
         pass
 
 
+def already_running():
+    """True if another Paw Pause owns the named mutex (single-instance guard)."""
+    kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+    kernel32.CreateMutexW.restype = wintypes.HANDLE
+    state["mutex"] = kernel32.CreateMutexW(None, False, "Local\\PawPauseSingleInstance")
+    return ctypes.get_last_error() == 183       # ERROR_ALREADY_EXISTS
+
+
 def main():
+    if already_running():
+        sys.exit(0)                             # a second copy would double-hook the keyboard
     root = tk.Tk()
     root.withdraw()
     overlay = Overlay(root)
