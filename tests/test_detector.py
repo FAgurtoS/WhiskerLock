@@ -3,7 +3,8 @@ import sys
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from detector import CatDetector, MAC_LAYOUT, WIN_LAYOUT, LINUX_LAYOUT  # noqa: E402
+from detector import (CatDetector, MAC_LAYOUT, WIN_LAYOUT, LINUX_LAYOUT,  # noqa: E402
+                      THRESHOLDS)
 
 
 class Clock:
@@ -69,6 +70,29 @@ class DetectorTests(unittest.TestCase):
 
     def test_linux(self):
         self.check(LINUX_LAYOUT)
+
+    def test_fast_rollover_typing_is_not_a_cat_when_balanced(self):
+        # Rolling QWER with 3 keys overlapping scores ~1.1: too easy to trigger
+        # by a fast typist, so it must not pause at "balanced" (but may at "high").
+        def roll(threshold):
+            clk = Clock()
+            d = CatDetector(WIN_LAYOUT, threshold=threshold, clock=clk)
+            q, w, e, r = (ord(c) for c in "QWER")
+            for c in (q, w, e):
+                clk.t += 0.03
+                d.feed_down(c)
+            d.feed_up(q)
+            clk.t += 0.03
+            d.feed_down(r)
+            return d.blocking
+
+        self.assertFalse(roll(THRESHOLDS["balanced"]))
+        self.assertTrue(roll(THRESHOLDS["high"]))
+
+    def test_threshold_order(self):
+        self.assertLess(THRESHOLDS["high"], THRESHOLDS["balanced"])
+        self.assertLess(THRESHOLDS["balanced"], THRESHOLDS["relaxed"])
+        self.assertEqual(CatDetector().threshold, THRESHOLDS["balanced"])
 
     def test_adjacency_symmetric(self):
         for layout in (MAC_LAYOUT, WIN_LAYOUT, LINUX_LAYOUT):

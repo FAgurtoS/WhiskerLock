@@ -9,7 +9,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
-from detector import CatDetector, MAC_LAYOUT  # noqa: E402
+from detector import CatDetector, MAC_LAYOUT, THRESHOLDS  # noqa: E402
 
 ESCAPE = MAC_LAYOUT.escape
 
@@ -28,9 +28,11 @@ def main():
     state = {"armed": True, "tap": None}
 
     # Saved preferences. Sensitivity s in 0.6..1.6 (higher = more sensitive);
-    # the detector threshold is 2.2 - s, so s=1.2 is the original threshold 1.0.
+    # the detector threshold is 2.2 - s: s=1.2 is "high" (1.0), s=0.9 is "balanced"
+    # (1.3, the default) and s=0.6 is "relaxed" (1.6); see detector.THRESHOLDS.
     prefs = NSUserDefaults.standardUserDefaults()
-    prefs.registerDefaults_({"sensitivity": 1.2, "sound": True, "stay": False})
+    prefs.registerDefaults_({"sensitivity": round(2.2 - THRESHOLDS["balanced"], 2),
+                             "sound": True, "stay": False})
     state["sound"] = bool(prefs.boolForKey_("sound"))
     detector.threshold = 2.2 - float(prefs.doubleForKey_("sensitivity"))
     detector.stay_locked = bool(prefs.boolForKey_("stay"))
@@ -224,7 +226,7 @@ def main():
             self.refresh()
 
         def updateSensLabel_(self, v):
-            name = "High" if v >= 1.35 else "Balanced" if v >= 1.05 else "Relaxed"
+            name = "High" if v >= 1.05 else "Balanced" if v >= 0.75 else "Relaxed"
             self.sens_label.setStringValue_("Sensitivity: " + name)
 
         def sensitivityChanged_(self, sender):

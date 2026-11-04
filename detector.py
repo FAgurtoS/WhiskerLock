@@ -14,6 +14,11 @@ W_CONCURRENT, W_CONCURRENT_HI, W_BURST = 0.7, 0.7, 0.4
 W_CLUSTER, W_REPEAT, W_NOSTRUCT = 0.4, 0.3, 0.2
 
 
+# Score needed to pause the keyboard, per sensitivity level (higher = harder to
+# trigger). Fast typing with key rollover scores ~1.1, so "balanced" sits above it.
+THRESHOLDS = {"high": 1.0, "balanced": 1.3, "relaxed": 1.6}
+
+
 def build_adjacency(rows):
     """Keys next to each other (same row +-1, rows above/below +-1)."""
     adj = {}
@@ -75,8 +80,8 @@ LINUX_LAYOUT = Layout(
 
 
 class CatDetector:
-    def __init__(self, layout=MAC_LAYOUT, threshold=1.0, stay_locked=False,
-                 clock=time.monotonic):
+    def __init__(self, layout=MAC_LAYOUT, threshold=THRESHOLDS["balanced"],
+                 stay_locked=False, clock=time.monotonic):
         self.layout = layout
         self.threshold = threshold
         self.stay_locked = stay_locked

@@ -20,7 +20,7 @@ import pystray
 from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
-from detector import CatDetector, WIN_LAYOUT  # noqa: E402
+from detector import CatDetector, THRESHOLDS, WIN_LAYOUT  # noqa: E402
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -51,7 +51,6 @@ kernel32.GetModuleHandleW.restype = wintypes.HMODULE
 SETTINGS_PATH = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")),
                              "PawPause", "settings.json")
 DEFAULTS = {"sensitivity": "balanced", "sound": True, "stay": False, "blur": True}
-THRESHOLDS = {"high": 0.8, "balanced": 1.0, "relaxed": 1.3}
 
 
 def load_settings():
@@ -72,7 +71,7 @@ def save_settings():
 
 
 settings = load_settings()
-detector = CatDetector(WIN_LAYOUT, threshold=THRESHOLDS.get(settings["sensitivity"], 1.0),
+detector = CatDetector(WIN_LAYOUT, threshold=THRESHOLDS.get(settings["sensitivity"], THRESHOLDS["balanced"]),
                        stay_locked=bool(settings["stay"]))
 lock = threading.Lock()                 # detector is used by hook + UI threads
 events = queue.Queue()                  # hook thread -> UI thread
