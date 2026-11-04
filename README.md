@@ -36,15 +36,33 @@ untick "Blur overlay" in the tray menu for a plain dark tint.
 Uninstall with `uninstall.ps1`.
 
 ### Linux
-Not supported yet.
+**Not supported yet.** The detector already has a Linux/X11 key table
+(`LINUX_LAYOUT`, unit-tested), but there is no keyboard-capture backend or tray
+app, and it has never been run on a Linux desktop. Wayland does not let normal
+apps block the global keyboard, so X11 would come first. Help testing is welcome:
+open an issue or a pull request.
 
 ## Layout
 
 - `detector.py`: platform-independent cat detection (with unit tests in `tests/`).
 - `pawpause.py`: macOS app. `pawpause_win.py`: Windows app.
 
-## Credits
+## Acknowledgments
 
-The detection logic is a Python port of the detector in
-[miladsafarzadeh1/PawPause-mac](https://github.com/miladsafarzadeh1/PawPause-mac)
-(MIT, by Milad Safarzadeh). The menu-bar app, blur overlay and installer are new.
+- **[Milad Safarzadeh](https://github.com/miladsafarzadeh1)** for
+  [PawPause-mac](https://github.com/miladsafarzadeh1/PawPause-mac) (MIT). The cat
+  detection (six weighted signals, 1.5 s window, auto-release, Esc override) is a
+  Python port of his `CatDetector.swift`; this project would not exist without it.
+  His copyright notice is kept in `LICENSE`.
+- Other cat-proof keyboard tools worth a look:
+  [JK-Tmux/PawPause](https://github.com/JK-Tmux/PawPause) (Windows) and the
+  commercial macOS app *Cats Lock*.
+- Built with [pyobjc](https://pyobjc.readthedocs.io/), [py2app](https://py2app.readthedocs.io/),
+  [pystray](https://github.com/moses-palmer/pystray) and [Pillow](https://python-pillow.org/).
+- Written with [Claude Code](https://claude.com/claude-code).
+- And to the cat, for the field testing.
+
+## License
+
+MIT, see `LICENSE`. This is an independent project, not affiliated with the
+projects above.
