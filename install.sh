@@ -1,11 +1,11 @@
 #!/bin/bash
-# Installs Paw Pause.app. Needs a real Python 3 (e.g. `brew install python`),
+# Installs WhiskerLock.app. Needs a real Python 3 (e.g. `brew install python`),
 # but NOT Xcode or the Command Line Tools.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-PREFIX="${PAWPAUSE_HOME:-$HOME/.pawpause}"
-APP_DIR="${PAWPAUSE_APP_DIR:-/Applications}"
+PREFIX="${WHISKERLOCK_HOME:-$HOME/.whiskerlock}"
+APP_DIR="${WHISKERLOCK_APP_DIR:-/Applications}"
 
 # Find a working Python 3 (skip the /usr/bin stub, it triggers an Xcode dialog).
 PY="${PYTHON:-}"
@@ -23,7 +23,7 @@ fi
 
 echo "==> Installing into $PREFIX"
 mkdir -p "$PREFIX"
-cp "$HERE/pawpause.py" "$HERE/detector.py" "$HERE/make_icon.py" "$HERE/setup.py" "$PREFIX/"
+cp "$HERE/whiskerlock.py" "$HERE/detector.py" "$HERE/make_icon.py" "$HERE/setup.py" "$PREFIX/"
 cd "$PREFIX"
 
 echo "==> Creating Python environment"
@@ -33,27 +33,27 @@ venv/bin/pip install --quiet pyobjc-framework-Quartz pyobjc-framework-Cocoa py2a
 
 echo "==> Making icon"
 venv/bin/python make_icon.py
-rm -rf PawPause.iconset && mkdir PawPause.iconset
+rm -rf WhiskerLock.iconset && mkdir WhiskerLock.iconset
 for s in 16 32 128 256 512; do
-  sips -z $s $s icon1024.png --out PawPause.iconset/icon_${s}x${s}.png >/dev/null
-  sips -z $((s*2)) $((s*2)) icon1024.png --out PawPause.iconset/icon_${s}x${s}@2x.png >/dev/null
+  sips -z $s $s icon1024.png --out WhiskerLock.iconset/icon_${s}x${s}.png >/dev/null
+  sips -z $((s*2)) $((s*2)) icon1024.png --out WhiskerLock.iconset/icon_${s}x${s}@2x.png >/dev/null
 done
-iconutil -c icns PawPause.iconset -o PawPause.icns
+iconutil -c icns WhiskerLock.iconset -o WhiskerLock.icns
 
 echo "==> Building app"
 rm -rf build dist
 venv/bin/python setup.py py2app -A >/dev/null
 
 echo "==> Copying to $APP_DIR"
-rm -rf "$APP_DIR/Paw Pause.app"
-cp -R "dist/Paw Pause.app" "$APP_DIR/"
+rm -rf "$APP_DIR/WhiskerLock.app"
+cp -R "dist/WhiskerLock.app" "$APP_DIR/"
 
 cat <<MSG
 
-Done: $APP_DIR/Paw Pause.app
+Done: $APP_DIR/WhiskerLock.app
 Next:
   1. Open it (a cat icon appears in the menu bar; a warning sign means permissions are missing).
-  2. System Settings > Privacy & Security: enable Paw Pause under
+  2. System Settings > Privacy & Security: enable WhiskerLock under
      Accessibility and Input Monitoring, then reopen the app.
   3. Optional: add it under General > Login Items to start automatically.
 Keep $PREFIX: the app runs from it.

@@ -1,9 +1,9 @@
-# Installs Paw Pause on Windows (current user, no admin needed).
+# Installs WhiskerLock on Windows (current user, no admin needed).
 # Needs Python 3.9+ from python.org or the Microsoft Store.
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1
 $ErrorActionPreference = "Stop"
 $here   = $PSScriptRoot
-$prefix = Join-Path $env:LOCALAPPDATA "PawPause"
+$prefix = Join-Path $env:LOCALAPPDATA "WhiskerLock"
 
 $py = $null
 foreach ($c in @("py", "python")) {
@@ -14,7 +14,7 @@ $pyArgs = @(); if ($py -eq "py") { $pyArgs = @("-3") }
 
 Write-Host "==> Installing into $prefix"
 New-Item -ItemType Directory -Force -Path $prefix | Out-Null
-Copy-Item "$here\detector.py", "$here\pawpause_win.py" $prefix -Force
+Copy-Item "$here\detector.py", "$here\whiskerlock_win.py" $prefix -Force
 
 Write-Host "==> Creating Python environment"
 & $py @pyArgs -m venv "$prefix\venv"
@@ -22,21 +22,21 @@ Write-Host "==> Creating Python environment"
 & "$prefix\venv\Scripts\python.exe" -m pip install --quiet pystray pillow
 
 Write-Host "==> Creating icon"
-$ico = "$prefix\pawpause.ico"
+$ico = "$prefix\whiskerlock.ico"
 & "$prefix\venv\Scripts\python.exe" "$here\make_icon_win.py" $ico
 
 Write-Host "==> Creating Start Menu shortcut"
-$lnk = Join-Path ([Environment]::GetFolderPath("Programs")) "Paw Pause.lnk"
+$lnk = Join-Path ([Environment]::GetFolderPath("Programs")) "WhiskerLock.lnk"
 $sh  = New-Object -ComObject WScript.Shell
 $s   = $sh.CreateShortcut($lnk)
 $s.TargetPath       = "$prefix\venv\Scripts\pythonw.exe"
-$s.Arguments        = "`"$prefix\pawpause_win.py`""
+$s.Arguments        = "`"$prefix\whiskerlock_win.py`""
 $s.WorkingDirectory = $prefix
 $s.Description      = "Pauses the keyboard when a cat walks on it"
 if (Test-Path $ico) { $s.IconLocation = "$ico,0" }
 $s.Save()
 
 Write-Host ""
-Write-Host "Done. Open 'Paw Pause' from the Start Menu: a paw icon appears in the system tray"
+Write-Host "Done. Open 'WhiskerLock' from the Start Menu: a paw icon appears in the system tray"
 Write-Host "(click the ^ arrow if it is hidden). Esc always unlocks the keyboard."
 Write-Host "Optional: press Win+R, type shell:startup and drop the shortcut there to start at login."

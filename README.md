@@ -1,4 +1,4 @@
-# Paw Pause 🐱
+# WhiskerLock 🐱
 
 A macOS menu-bar app that pauses your keyboard when a cat walks on it, and blurs
 the screen with a "Cat in keyboard" message until it is safe again.
@@ -18,7 +18,7 @@ Requires a Python 3 (`brew install python`). Xcode is **not** needed.
 ./install.sh
 ```
 
-Then enable **Paw Pause** under System Settings > Privacy & Security >
+Then enable **WhiskerLock** under System Settings > Privacy & Security >
 **Accessibility** and **Input Monitoring**, and reopen the app.
 Uninstall with `./uninstall.sh`.
 
@@ -29,7 +29,7 @@ Requires Python 3.9+ ([python.org](https://www.python.org/downloads/)). In Power
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-Open **Paw Pause** from the Start Menu; the paw icon lives in the system tray
+Open **WhiskerLock** from the Start Menu; the paw icon lives in the system tray
 (click the ^ arrow if hidden). No special permissions are needed.
 The blur overlay uses an undocumented Windows API; if it does not look right,
 untick "Blur overlay" in the tray menu for a plain dark tint.
@@ -45,7 +45,7 @@ open an issue or a pull request.
 ## Layout
 
 - `detector.py`: platform-independent cat detection (with unit tests in `tests/`).
-- `pawpause.py`: macOS app. `pawpause_win.py`: Windows app.
+- `whiskerlock.py`: macOS app. `whiskerlock_win.py`: Windows app.
 
 ## Acknowledgments
 

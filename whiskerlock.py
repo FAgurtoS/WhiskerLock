@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paw Pause (macOS): pauses the keyboard when a cat walks on it.
+"""WhiskerLock (macOS): pauses the keyboard when a cat walks on it.
 
 Detection lives in detector.py (ported from miladsafarzadeh1/PawPause-mac, MIT).
 Esc always releases. Keystrokes are never stored or sent anywhere: only
@@ -133,7 +133,7 @@ def main():
             test.setTarget_(self)
             menu.addItem_(NSMenuItem.separatorItem())
             quit_item = menu.addItemWithTitle_action_keyEquivalent_(
-                "Quit Paw Pause", "quit:", "q")
+                "Quit WhiskerLock", "quit:", "q")
             quit_item.setTarget_(self)
             self.item.setMenu_(menu)
             self.timer = NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(

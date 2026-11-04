@@ -1,17 +1,17 @@
 from setuptools import setup
 setup(
-    app=["pawpause.py"],
-    name="Paw Pause",
+    app=["whiskerlock.py"],
+    name="WhiskerLock",
     options={"py2app": {
-        "iconfile": "PawPause.icns",
+        "iconfile": "WhiskerLock.icns",
         "plist": {
-            "CFBundleName": "Paw Pause",
-            "CFBundleDisplayName": "Paw Pause",
-            "CFBundleIdentifier": "local.felipe.pawpause",
+            "CFBundleName": "WhiskerLock",
+            "CFBundleDisplayName": "WhiskerLock",
+            "CFBundleIdentifier": "local.felipe.whiskerlock",
             "CFBundleVersion": "1.0",
             "LSUIElement": True,
             "NSInputMonitoringUsageDescription":
-                "Paw Pause watches keystroke patterns to detect when your cat is on the keyboard.",
+                "WhiskerLock watches keystroke patterns to detect when your cat is on the keyboard.",
         },
     }},
     setup_requires=["py2app"],

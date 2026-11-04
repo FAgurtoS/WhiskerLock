@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paw Pause (Windows): pauses the keyboard when a cat walks on it.
+"""WhiskerLock (Windows): pauses the keyboard when a cat walks on it.
 
 Detection lives in detector.py (ported from miladsafarzadeh1/PawPause-mac, MIT).
 Esc always releases. Keystrokes are never stored or sent anywhere: only
@@ -49,7 +49,7 @@ kernel32.GetModuleHandleW.restype = wintypes.HMODULE
 
 # ---------------------------------------------------------------- settings
 SETTINGS_PATH = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")),
-                             "PawPause", "settings.json")
+                             "WhiskerLock", "settings.json")
 DEFAULTS = {"sensitivity": "balanced", "sound": True, "stay": False, "blur": True}
 
 
@@ -261,7 +261,7 @@ def build_tray():
         return pystray.MenuItem(name.capitalize(), set_sensitivity(name),
                                 checked=lambda i, n=name: settings["sensitivity"] == n,
                                 radio=True)
-    return TrayIcon("pawpause", make_image("ok"), "Paw Pause", pystray.Menu(
+    return TrayIcon("whiskerlock", make_image("ok"), "WhiskerLock", pystray.Menu(
         pystray.MenuItem(status_text, None, enabled=False),
         pystray.MenuItem("Armed", toggle_armed, checked=lambda i: state["armed"]),
         pystray.MenuItem("Stay locked until I unlock", toggle_stay,
@@ -275,7 +275,7 @@ def build_tray():
         pystray.MenuItem("Unlock keyboard", unlock),
         pystray.MenuItem("Test overlay (3 s)", test_overlay),
         pystray.Menu.SEPARATOR,
-        pystray.MenuItem("Quit Paw Pause", quit_app),
+        pystray.MenuItem("Quit WhiskerLock", quit_app),
     ))
 
 
@@ -364,10 +364,10 @@ def beep():
 
 
 def already_running():
-    """True if another Paw Pause owns the named mutex (single-instance guard)."""
+    """True if another WhiskerLock owns the named mutex (single-instance guard)."""
     kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
     kernel32.CreateMutexW.restype = wintypes.HANDLE
-    state["mutex"] = kernel32.CreateMutexW(None, False, "Local\\PawPauseSingleInstance")
+    state["mutex"] = kernel32.CreateMutexW(None, False, "Local\\WhiskerLockSingleInstance")
     return ctypes.get_last_error() == 183       # ERROR_ALREADY_EXISTS
 
 
@@ -415,5 +415,5 @@ def main():
 
 if __name__ == "__main__":
     if sys.platform != "win32":
-        sys.exit("pawpause_win.py only runs on Windows.")
+        sys.exit("whiskerlock_win.py only runs on Windows.")
     main()
