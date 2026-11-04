@@ -17,10 +17,10 @@ import tkinter as tk
 from ctypes import wintypes
 
 import pystray
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
-from detector import CatDetector, WIN_LAYOUT  # noqa: E402
+from detector import CatDetector, THRESHOLDS, WIN_LAYOUT  # noqa: E402
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -51,7 +51,6 @@ kernel32.GetModuleHandleW.restype = wintypes.HMODULE
 SETTINGS_PATH = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")),
                              "PawPause", "settings.json")
 DEFAULTS = {"sensitivity": "balanced", "sound": True, "stay": False, "blur": True}
-THRESHOLDS = {"high": 0.8, "balanced": 1.0, "relaxed": 1.3}
 
 
 def load_settings():
@@ -72,7 +71,7 @@ def save_settings():
 
 
 settings = load_settings()
-detector = CatDetector(WIN_LAYOUT, threshold=THRESHOLDS.get(settings["sensitivity"], 1.0),
+detector = CatDetector(WIN_LAYOUT, threshold=THRESHOLDS.get(settings["sensitivity"], THRESHOLDS["balanced"]),
                        stay_locked=bool(settings["stay"]))
 lock = threading.Lock()                 # detector is used by hook + UI threads
 events = queue.Queue()                  # hook thread -> UI thread
@@ -125,7 +124,32 @@ def hook_thread():
 # ---------------------------------------------------------------- tray icon
 
 
-def make_image(kind):
+EMOJI_FONT = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "seguiemj.ttf")
+CAT_EMOJI = "\U0001F431"                 # cat face
+BADGES = {"blocked": (225, 60, 60, 255), "warn": (240, 170, 40, 255)}
+_emoji_cache = []
+
+
+def _cat_emoji():
+    """The cat emoji as a 64x64 RGBA image, or None if the font is unavailable."""
+    if not _emoji_cache:
+        try:
+            font = ImageFont.truetype(EMOJI_FONT, 109)
+            big = Image.new("RGBA", (160, 160), (0, 0, 0, 0))
+            ImageDraw.Draw(big).text((0, 0), CAT_EMOJI, font=font, embedded_color=True)
+            box = big.getbbox()
+            glyph = big.crop(box)
+            glyph.thumbnail((60, 60), Image.LANCZOS)
+            img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+            img.paste(glyph, ((64 - glyph.width) // 2, (64 - glyph.height) // 2), glyph)
+            _emoji_cache.append(img)
+        except (OSError, ValueError, TypeError):
+            _emoji_cache.append(None)
+    return _emoji_cache[0]
+
+
+def _paw_image(kind):
+    """Fallback icon: drawn paw on a coloured tile."""
     colors = {"ok": (250, 200, 115), "blocked": (225, 80, 80),
               "off": (160, 160, 160), "warn": (240, 170, 40)}
     img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
@@ -135,6 +159,20 @@ def make_image(kind):
     d.ellipse((20, 30, 44, 54), fill=ink)                     # pad
     for x, y in ((11, 24), (23, 12), (37, 12), (49, 24)):     # toes
         d.ellipse((x - 6, y - 6, x + 6, y + 6), fill=ink)
+    return img
+
+
+def make_image(kind):
+    cat = _cat_emoji()
+    if cat is None:
+        return _paw_image(kind)
+    img = cat.copy()
+    if kind == "off":                                          # grey cat = not armed
+        alpha = img.getchannel("A")
+        img = Image.merge("RGBA", (*(img.convert("L"),) * 3, alpha))
+    elif kind in BADGES:                                       # dot: blocked / warning
+        d = ImageDraw.Draw(img)
+        d.ellipse((38, 38, 62, 62), fill=BADGES[kind], outline=(255, 255, 255, 255), width=3)
     return img
 
 
@@ -202,12 +240,28 @@ def quit_app(icon, item):
     events.put("quit")
 
 
+WM_LBUTTONUP, WM_RBUTTONUP = 0x0202, 0x0205
+
+
+class TrayIcon(pystray.Icon):
+    """Tray icon whose menu opens on left click as well as right click.
+
+    pystray only shows the menu on right click; custom shells (e.g. MyDockFinder)
+    and most people expect the primary button to work too.
+    """
+
+    def _on_notify(self, wparam, lparam):
+        if lparam == WM_LBUTTONUP:
+            lparam = WM_RBUTTONUP
+        super()._on_notify(wparam, lparam)
+
+
 def build_tray():
     def sens(name):
         return pystray.MenuItem(name.capitalize(), set_sensitivity(name),
                                 checked=lambda i, n=name: settings["sensitivity"] == n,
                                 radio=True)
-    return pystray.Icon("pawpause", make_image("ok"), "Paw Pause", pystray.Menu(
+    return TrayIcon("pawpause", make_image("ok"), "Paw Pause", pystray.Menu(
         pystray.MenuItem(status_text, None, enabled=False),
         pystray.MenuItem("Armed", toggle_armed, checked=lambda i: state["armed"]),
         pystray.MenuItem("Stay locked until I unlock", toggle_stay,
@@ -309,7 +363,17 @@ def beep():
         pass
 
 
+def already_running():
+    """True if another Paw Pause owns the named mutex (single-instance guard)."""
+    kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+    kernel32.CreateMutexW.restype = wintypes.HANDLE
+    state["mutex"] = kernel32.CreateMutexW(None, False, "Local\\PawPauseSingleInstance")
+    return ctypes.get_last_error() == 183       # ERROR_ALREADY_EXISTS
+
+
 def main():
+    if already_running():
+        sys.exit(0)                             # a second copy would double-hook the keyboard
     root = tk.Tk()
     root.withdraw()
     overlay = Overlay(root)
